@@ -1,31 +1,103 @@
-# Forestry
+# Forestry App
 
-### Install
+A modern web application for managing forestry data and operations. Built with React, TypeScript, and Material-UI.
 
-```node
-npm install
-npm start
+## Features
+
+- Interactive map visualization of forest areas
+- Forest data management and tracking
+- Action tracking (planting, harvesting, maintenance)
+- User authentication and authorization
+- Data visualization with charts
+- Responsive design
+
+## Tech Stack
+
+- React 18
+- TypeScript
+- Material-UI v5
+- Firebase (Authentication & Firestore)
+- Mapbox GL
+- React Query
+- Zustand (State Management)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+- Firebase account
+- Mapbox account
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/forestry-app.git
+cd forestry-app
 ```
 
-### Technologies used
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
 
-##### Main
- - React (Context API and routing)
- - Firebase for storage and authentication
- - Material.UI for navigation bars, buttons and theming
- - PrimeReact for bar and pie charts as it is a wrapper for ChartJS
+3. Create a `.env` file in the root directory with the following variables:
+```env
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+REACT_APP_FIREBASE_PROJECT_ID=your_firebase_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+REACT_APP_FIREBASE_APP_ID=your_firebase_app_id
+REACT_APP_MAPBOX_TOKEN=your_mapbox_token
+```
 
-#### Description
+4. Start the development server:
+```bash
+npm start
+# or
+yarn start
+```
 
-This is a web application to maintain and plan future logging operations of my of forest lands.
+The application will be available at `http://localhost:3000`.
 
-The application consists of three main views which can be toggled between and are complemented with the most important part of the project; the map showing all of the different logging regions visualized from GeoJSON data. The map is fully interactive and will display relevant metadata which is fetched from the database. For each region, a table displays for example tree age ranges, species distribution and much more. Another table displays past and future logging operations and is fully interactive for easy management.
+## Project Structure
 
-#### Images
-<div>
-  <img src="public/homepage.png" width="800" />
-  <img src="public/homepagefull.png" width="500" />
-  <img src="public/map.png" width="500" />
-  <img src="public/areainfo.png" width="500" />
-  <img src="public/distribution.png" width="500" />
-</div>
+```
+src/
+├── assets/          # Static assets (images, fonts, etc.)
+├── common/          # Reusable components
+├── components/      # Feature-specific components
+├── constants/       # Application constants
+├── features/        # Feature-specific code
+├── hooks/          # Custom React hooks
+├── providers/      # Context providers
+├── types/          # TypeScript type definitions
+└── utils/          # Utility functions
+```
+
+## Available Scripts
+
+- `npm start` - Runs the app in development mode
+- `npm test` - Launches the test runner
+- `npm run build` - Builds the app for production
+- `npm run eject` - Ejects from Create React App
+- `npm run lint` - Runs ESLint
+- `npm run lint:fix` - Fixes ESLint issues
+- `npm run format` - Formats code with Prettier
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
