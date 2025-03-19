@@ -1,122 +1,108 @@
-import Avatar from "@material-ui/core/Avatar";
-import Button from "@material-ui/core/Button";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
-import { makeStyles } from "@material-ui/core/styles";
-import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import React, { useState } from "react";
-import Image from "../assets/huset.jpg";
-import { auth } from "../utils/firestore";
+import {
+  Avatar,
+  Button,
+  CssBaseline,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { LockOutlined } from '@mui/icons-material';
+import { auth } from "../utils/firestore.js";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    height: "100vh",
-  },
-  image: {
-    backgroundImage: `url(${Image})`,
-    backgroundRepeat: "no-repeat",
-    backgroundColor:
-      theme.palette.type === "light"
-        ? theme.palette.grey[50]
-        : theme.palette.grey[900],
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-  },
-  paper: {
-    margin: theme.spacing(8, 4),
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  avatar: {
-    margin: theme.spacing(1),
-    backgroundColor: theme.palette.secondary.main,
-  },
-  form: {
-    width: "100%", // Fix IE 11 issue.
-    marginTop: theme.spacing(1),
-  },
-  submit: {
-    margin: theme.spacing(3, 0, 2),
-  },
+const Root = styled(Paper)(({ theme }) => ({
+  marginTop: theme.spacing(8),
+  padding: theme.spacing(4),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+}));
+
+const StyledAvatar = styled(Avatar)(({ theme }) => ({
+  margin: theme.spacing(1),
+  backgroundColor: theme.palette.secondary.main,
+}));
+
+const Form = styled('form')(({ theme }) => ({
+  width: '100%',
+  marginTop: theme.spacing(1),
+}));
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+  margin: theme.spacing(3, 0, 2),
 }));
 
 const SignIn = () => {
-  const classes = useStyles();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const signInWithEmailAndPasswordHandler = (event, email, password) => {
-    event.preventDefault();
-    auth.signInWithEmailAndPassword(email, password).catch((error) => {
-      console.error("Error signing in with password and email", error);
-    });
-  };
-
-  const onChangeHandler = (event) => {
-    const { name, value } = event.currentTarget;
-
-    if (name === "userEmail") {
-      setEmail(value);
-    } else if (name === "userPassword") {
-      setPassword(value);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setError("");
+    } catch (error) {
+      setError("Invalid email or password");
     }
   };
+
   return (
-    <Grid container component="main" className={classes.root}>
+    <Grid container component="main" justifyContent="center">
       <CssBaseline />
-      <Grid item xs={false} sm={4} md={7} className={classes.image} />
-      <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
-        <div className={classes.paper}>
-          <Avatar className={classes.avatar}>
-            <LockOutlinedIcon />
-          </Avatar>
+      <Grid item xs={12} sm={8} md={4} component={Paper} elevation={6} square>
+        <Root>
+          <StyledAvatar>
+            <LockOutlined />
+          </StyledAvatar>
           <Typography component="h1" variant="h5">
             Sign in
           </Typography>
-          <form className={classes.form} noValidate>
+          <Form onSubmit={handleSubmit}>
             <TextField
               variant="outlined"
               margin="normal"
               required
               fullWidth
               id="email"
-              label="E-postadress"
-              name="userEmail"
+              label="Email Address"
+              name="email"
               autoComplete="email"
               autoFocus
-              onChange={onChangeHandler}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               variant="outlined"
               margin="normal"
               required
               fullWidth
-              name="userPassword"
-              label="Lösenord"
+              name="password"
+              label="Password"
               type="password"
               id="password"
               autoComplete="current-password"
-              onChange={onChangeHandler}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
-            <Button
+            {error && (
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            )}
+            <SubmitButton
               type="submit"
               fullWidth
               variant="contained"
               color="primary"
-              className={classes.submit}
-              onClick={(event) => {
-                signInWithEmailAndPasswordHandler(event, email, password);
-              }}
             >
-              Logga in
-            </Button>
-          </form>
-        </div>
+              Sign In
+            </SubmitButton>
+          </Form>
+        </Root>
       </Grid>
     </Grid>
   );

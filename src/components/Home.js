@@ -1,52 +1,29 @@
-import AppBar from "@material-ui/core/AppBar";
-import Box from "@material-ui/core/Box";
-import { green } from "@material-ui/core/colors";
-import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
-import { createMuiTheme, makeStyles } from "@material-ui/core/styles";
-import Tab from "@material-ui/core/Tab";
-import Tabs from "@material-ui/core/Tabs";
-import { ThemeProvider } from "@material-ui/styles";
-import React, { useContext, useEffect } from "react";
-import { UserContext } from "../providers/UserProvider";
-import { auth } from "../utils/firestore";
-import AgeTable from "./AgeTable";
-import Map from "./Map";
-import MetadataComponent from "./MetadataComponent";
-import SummaryComponent from "./SummaryComponent";
+import React, { useState } from 'react';
+import {
+  AppBar,
+  Box,
+  Grid,
+  Paper,
+  Tab,
+  Tabs,
+  ThemeProvider,
+  createTheme,
+} from '@mui/material';
+import { green } from '@mui/material/colors';
+import Map from './Map';
+import SummaryComponent from './SummaryComponent';
+import MetadataComponent from './MetadataComponent';
+import TreeDistCharts from './TreeDistCharts';
 
-const theme = createMuiTheme({
+const theme = createTheme({
   palette: {
     primary: {
-      main: green[800],
-    },
-    secondary: {
-      main: "#ff9100",
+      main: green[600],
     },
   },
 });
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-    backgroundColor: theme.palette.background.paper,
-  },
-  paper: {
-    padding: theme.spacing(1),
-    textAlign: "center",
-    color: theme.palette.text.secondary,
-  },
-  buttonPadding: {
-    padding: "0px",
-  },
-  rightAlign: {
-    marginLeft: "auto",
-  },
-}));
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
+const TabPanel = ({ children, value, index, ...other }) => {
   return (
     <div
       role="tabpanel"
@@ -55,74 +32,75 @@ function TabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box p={3}>{children}</Box>}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
-}
+};
 
 const Home = () => {
-  const classes = useStyles();
-  const user = useContext(UserContext);
+  const [tabValue, setTabValue] = useState(0);
 
-  useEffect(() => {}, []);
-
-  const [value, setValue] = React.useState(0);
-  const [clickedID, setClickedID] = React.useState(1); // the lifted state
-
-  const sendDataToParent = (index) => {
-    setClickedID(index);
-    setValue(2);
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
   };
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
   return (
-    <div className={classes.root}>
-      <ThemeProvider theme={theme}>
-        <Grid container>
-          <Grid item sm={5}>
-            <Map sendDataToParent={sendDataToParent} />
+    <ThemeProvider theme={theme}>
+      <Box sx={{ flexGrow: 1 }}>
+        <AppBar position="static">
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="simple tabs example"
+          >
+            <Tab label="Map" />
+            <Tab label="Summary" />
+            <Tab label="Metadata" />
+            <Tab label="Charts" />
+          </Tabs>
+        </AppBar>
+
+        <TabPanel value={tabValue} index={0}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2 }}>
+                <Map />
+              </Paper>
+            </Grid>
           </Grid>
-          <Grid item sm={7}>
-            <AppBar position="static">
-              <Tabs value={value} onChange={handleChange} centered>
-                <Tab label="Sammanställning" />
-                <Tab label="Åldersklassfördelning" />
-                <Tab label="Beståndsinformation" />
-                <Tab
-                  value={false}
-                  className={classes.rightAlign}
-                  onClick={() => {
-                    auth.signOut();
-                  }}
-                  label={
-                    <React.Fragment>
-                      Logga ut
-                      <br />
-                      <span style={{ fontSize: "0.5vw" }}>
-                        {user.displayName}
-                      </span>
-                    </React.Fragment>
-                  }
-                />
-              </Tabs>
-            </AppBar>
-            <TabPanel value={value} index={0}>
-              <Paper>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2 }}>
                 <SummaryComponent />
               </Paper>
-            </TabPanel>
-            <TabPanel value={value} index={1}>
-              <AgeTable />
-            </TabPanel>
-            <TabPanel value={value} index={2}>
-              <MetadataComponent dataParentToChild={clickedID} />
-            </TabPanel>
+            </Grid>
           </Grid>
-        </Grid>
-      </ThemeProvider>
-    </div>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2 }}>
+                <MetadataComponent />
+              </Paper>
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2 }}>
+                <TreeDistCharts />
+              </Paper>
+            </Grid>
+          </Grid>
+        </TabPanel>
+      </Box>
+    </ThemeProvider>
   );
 };
 

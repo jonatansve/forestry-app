@@ -7,7 +7,21 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Check as CheckIcon } from '@mui/icons-material';
 
-const EditableTextField = ({ value, onChange, label, type = 'text', fullWidth = true }) => {
+interface EditableTextFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
+  type?: string;
+  fullWidth?: boolean;
+}
+
+export const EditableTextField: React.FC<EditableTextFieldProps> = ({
+  value,
+  onChange,
+  label,
+  type = 'text',
+  fullWidth = true,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
 
@@ -49,6 +63,4 @@ const EditableTextField = ({ value, onChange, label, type = 'text', fullWidth = 
       }}
     />
   );
-};
-
-export default EditableTextField;
+}; 

@@ -1,51 +1,53 @@
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Container from "@material-ui/core/Container";
-import FormControl from "@material-ui/core/FormControl";
-import Grid from "@material-ui/core/Grid";
-// Select
-import InputLabel from "@material-ui/core/InputLabel";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import MenuItem from "@material-ui/core/MenuItem";
-import Paper from "@material-ui/core/Paper";
-import Select from "@material-ui/core/Select";
-import { makeStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
+import {
+  Card,
+  CardContent,
+  Container,
+  FormControl,
+  Grid,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Paper,
+  Select,
+  Typography,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import React, { useEffect, useState } from "react";
 import ActionsTable from "../components/ActionsTable.js";
 import EditableTextArea from "../components/EditableTextArea.js";
 import EditableTextField from "../components/EditableTextField.js";
-// import { metadata, actions } from "../geojsonSource.js";
 import TreeDistCharts from "../components/TreeDistCharts.js";
 import ClassPopoverInfo from "../utils/ClassPopoverInfo.js";
-import { firestore } from "../utils/firestore.js";
+import { getDocument, getCollection, updateDocument } from "../utils/firestore.js";
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    textAlign: "center",
-    flexGrow: 1,
-  },
-  cardRoot: {
-    width: "100%",
-  },
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-  title: {
-    fontSize: 14,
-    textAlign: "left",
-  },
-  classTitle: {
-    textAlign: "left",
-  },
+const Root = styled(Paper)(({ theme }) => ({
+  textAlign: "center",
+  flexGrow: 1,
 }));
 
+const StyledCard = styled(Card)({
+  width: "100%",
+});
+
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  margin: theme.spacing(1),
+  minWidth: 120,
+}));
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+}));
+
+const Title = styled(Typography)({
+  fontSize: 14,
+  textAlign: "left",
+});
+
+const ClassTitle = styled(Typography)({
+  textAlign: "left",
+});
+
 const MetadataComponent = ({ dataParentToChild }) => {
-  const classes = useStyles();
   const [metaData, setMetaData] = useState({
     general: {},
     distribution: {},
@@ -54,81 +56,35 @@ const MetadataComponent = ({ dataParentToChild }) => {
   });
   const [actionData, setActionData] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // MÅLKLASS
   const [goalClass, setGoalClass] = useState("");
-
-  // HUGGNINGSKLASS
   const [chopClassVal, setChopClassVal] = useState("");
 
   useEffect(() => {
     if (dataParentToChild) {
-      // firestore
-      //   .collection("data")
-      //   .doc(dataParentToChild.toString())
-      //   .set(metadata)
-      //   .then(function () {
-      //     console.log("Document successfully written!");
-      //   })
-      //   .catch(function (error) {
-      //     console.error("Error writing document: ", error);
-      //   });
-      // console.log(actions);
-      // Add default subcollection:
-      // firestore
-      //   .collection("data")
-      //   .doc(dataParentToChild.toString())
-      //   .collection("actions")
-      //   .add(actions)
-      //   .then(function () {
-      //     console.log("Document successfully written! act");
-      //   })
-      //   .catch(function (error) {
-      //     console.error("Error writing document: ", error);
-      //   });
-    }
-    firestore
-      .collection("data")
-      .doc(dataParentToChild.toString())
-      .get()
-      .then(function (doc) {
-        if (doc.exists) {
-          let data = doc.data();
-          setMetaData(data);
-          setGoalClass(data.general.class);
-          setChopClassVal(data.description.type);
-          setLoading(false);
-        } else {
-          console.log("No such document!");
-        }
-      })
-      .catch(function (error) {
-        console.log("Error getting document:", error);
-      });
+      const fetchData = async () => {
+        try {
+          const data = await getDocument("data", dataParentToChild.toString());
+          if (data) {
+            setMetaData(data);
+            setGoalClass(data.general.class);
+            setChopClassVal(data.description.type);
+            setLoading(false);
+          }
 
-    firestore
-      .collection("data")
-      .doc(dataParentToChild.toString())
-      .collection("actions")
-      .get()
-      .then(function (querySnapshot) {
-        let tempArray = [];
-        querySnapshot.forEach(function (doc) {
-          let data = doc.data();
-          data.id = doc.id;
-          tempArray.push(data);
-          setLoading(false);
-        });
-        setActionData(tempArray);
-      })
-      .catch(function (error) {
-        console.log("Error getting document:", error);
-      });
+          const actions = await getCollection(`data/${dataParentToChild.toString()}/actions`);
+          setActionData(actions);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      };
+
+      fetchData();
+    }
   }, [dataParentToChild]);
 
   metaData["actions"] = actionData;
 
-  const editableData = (value, path) => {
+  const editableData = async (value, path) => {
     if (path) {
       let parentObject = path.split(".")[0];
       let childObject = path.split(".")[1];
@@ -142,65 +98,55 @@ const MetadataComponent = ({ dataParentToChild }) => {
       }
 
       if (!childObject) {
-        // For notes which only contains parentObject
         dbData[parentObject] = value;
       } else {
         child[childObject] = isString ? value : numberValue;
         dbData[parentObject] = child;
       }
 
-      firestore
-        .collection("data")
-        .doc(dataParentToChild.toString())
-        .set(dbData, { merge: true })
-        .then(function () {
-          console.log("Document successfully written!");
-        })
-        .catch(function (error) {
-          console.error("Error writing document: ", error);
-        });
+      try {
+        await updateDocument("data", dataParentToChild.toString(), dbData);
+        console.log("Document successfully updated!");
+      } catch (error) {
+        console.error("Error updating document:", error);
+      }
     }
   };
 
-  const handleGoalClassChange = (event) => {
-    firestore
-      .collection("data")
-      .doc(dataParentToChild.toString())
-      .set({ description: { type: event.target.value } }, { merge: true })
-      .then(function () {
-        setLoading(false);
-        console.log("Document successfully written!");
-      })
-      .catch(function (error) {
-        console.error("Error writing document: ", error);
+  const handleGoalClassChange = async (event) => {
+    try {
+      await updateDocument("data", dataParentToChild.toString(), {
+        description: { type: event.target.value }
       });
-    setGoalClass(event.target.value);
+      setLoading(false);
+      console.log("Document successfully updated!");
+      setGoalClass(event.target.value);
+    } catch (error) {
+      console.error("Error updating document:", error);
+    }
   };
 
-  const handleChopClassChange = (event) => {
-    console.log("Select val: " + event.target.value);
-    firestore
-      .collection("data")
-      .doc(dataParentToChild.toString())
-      .set({ general: { class: event.target.value } }, { merge: true })
-      .then(function () {
-        setLoading(false);
-        console.log("Document successfully written!");
-      })
-      .catch(function (error) {
-        console.error("Error writing document: ", error);
+  const handleChopClassChange = async (event) => {
+    try {
+      await updateDocument("data", dataParentToChild.toString(), {
+        general: { class: event.target.value }
       });
-    setChopClassVal(event.target.value);
+      setLoading(false);
+      console.log("Document successfully updated!");
+      setChopClassVal(event.target.value);
+    } catch (error) {
+      console.error("Error updating document:", error);
+    }
   };
 
   return (
-    <Paper className={classes.root}>
+    <Root>
       {loading ? (
         <LinearProgress color="secondary" />
       ) : (
-        <Paper className={classes.root}>
+        <Root>
           <Container maxWidth="md">
-            <Grid container spacing={3} justify="center">
+            <Grid container spacing={3} justifyContent="center">
               <Typography variant="h3">{metaData.general.name}</Typography>
               <Grid item sm={12}>
                 <Typography variant="h5">
@@ -208,9 +154,8 @@ const MetadataComponent = ({ dataParentToChild }) => {
                 </Typography>
               </Grid>
               <Grid item sm={4}>
-                <Card className={classes.cardRoot}>
-                  <CardContent className={classes.classDesc}>
-                    {/* Production goal */}
+                <StyledCard>
+                  <CardContent>
                     <EditableTextField
                       editableData={editableData}
                       name={"general.goal"}
@@ -242,9 +187,8 @@ const MetadataComponent = ({ dataParentToChild }) => {
                       label="Total volym (m3sk/bestånd)"
                     />
                   </CardContent>
-                </Card>
+                </StyledCard>
               </Grid>
-              {/* Description */}
 
               <Grid item sm={3}>
                 <div
@@ -254,32 +198,26 @@ const MetadataComponent = ({ dataParentToChild }) => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <FormControl margin="none" className={classes.formControl}>
+                  <StyledFormControl margin="none">
                     <InputLabel
                       shrink
                       id="demo-simple-select-placeholder-label-label"
                     >
                       Målklass
                     </InputLabel>
-                    <Select
+                    <StyledSelect
                       labelId="demo-simple-select-placeholder-label-label"
                       id="demo-simple-select-placeholder-label"
                       value={goalClass ? goalClass : ""}
                       displayEmpty
                       onChange={handleGoalClassChange}
-                      className={classes.selectEmpty}
                     >
-                      {/* Många skogsbruksplaner använder en målklassning där varje avdelning klassas efter hur de ska tillfredställa de båda målen produktion och miljö. Målklassning är också ett krav om skogsbruket är certifierat. */}
                       <MenuItem value={"PG"}>PG</MenuItem>
-                      {/* PG – Produktion med generell miljöhänsyn. Den vanligaste målklassen, här bedrivs skogsbruk för virkesproduktion, men naturligtvis gäller generell hänsyn vid varje åtgärd. */}
                       <MenuItem value={"PFK"}>PF (K)</MenuItem>
-                      {/* PF (K) – Produktion med förstärkt miljöhänsyn (kombinerat mål). Här brukas skogen också för virkesproduktion men det finns ett miljöintresse utöver den generella hänsynen. */}
                       <MenuItem value={"NO"}>NO</MenuItem>
-                      {/* NO – Naturvård, orört. Här kan det handla om till exempel gammal skog med mycket död ved eller en sumpskog. Skogen lämnas för fri utveckling. */}
                       <MenuItem value={"NS"}>NS</MenuItem>
-                      {/* NS – Naturvård med skötsel. I NS-beståndet väger miljövärdena tyngst men de kan behöva bevaras eller förstärkas med naturvårdande skötsel. Exempel kan vara att frihugga gamla ekar eller att ta bort gran som håller på att ta över i en lövskog. */}
-                    </Select>
-                  </FormControl>
+                    </StyledSelect>
+                  </StyledFormControl>
                   <ClassPopoverInfo popType={1} />
                 </div>
                 <div
@@ -289,20 +227,19 @@ const MetadataComponent = ({ dataParentToChild }) => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <FormControl className={classes.formControl}>
+                  <StyledFormControl>
                     <InputLabel
                       shrink
                       id="demo-simple-select-placeholder-label-label"
                     >
                       Huggningsklass
                     </InputLabel>
-                    <Select
+                    <StyledSelect
                       labelId="demo-simple-select-placeholder-label-label"
                       id="demo-simple-select-placeholder-label"
                       value={chopClassVal ? chopClassVal : ""}
                       displayEmpty
                       onChange={handleChopClassChange}
-                      className={classes.selectEmpty}
                     >
                       <MenuItem value={"K1"}>K1</MenuItem>
                       <MenuItem value={"K2"}>K2</MenuItem>
@@ -313,14 +250,13 @@ const MetadataComponent = ({ dataParentToChild }) => {
                       <MenuItem value={"S1"}>S1</MenuItem>
                       <MenuItem value={"S2"}>S2</MenuItem>
                       <MenuItem value={"S3"}>S3</MenuItem>
-                    </Select>
-                  </FormControl>
+                    </StyledSelect>
+                  </StyledFormControl>
                   <ClassPopoverInfo popType={2} />
                 </div>
               </Grid>
               <TreeDistCharts data={metaData.distribution} />
 
-              {/* Notes */}
               <Grid item sm={10}>
                 <EditableTextArea
                   editableData={editableData}
@@ -328,7 +264,6 @@ const MetadataComponent = ({ dataParentToChild }) => {
                   value={metaData.notes}
                 />
               </Grid>
-              {/* Actions */}
               <Grid item sm={10}>
                 <ActionsTable
                   actionData={metaData.actions}
@@ -337,9 +272,10 @@ const MetadataComponent = ({ dataParentToChild }) => {
               </Grid>
             </Grid>
           </Container>
-        </Paper>
+        </Root>
       )}
-    </Paper>
+    </Root>
   );
 };
+
 export default MetadataComponent;

@@ -14,15 +14,31 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { getCollection, deleteDocument } from '../utils/firestore';
 
-const ActionsTable = ({ onEdit, loading = false }) => {
-  const [actions, setActions] = useState([]);
-  const [error, setError] = useState(null);
+interface Action {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  status: string;
+}
+
+interface ActionsTableProps {
+  onEdit: (action: Action) => void;
+  loading?: boolean;
+}
+
+export const ActionsTable: React.FC<ActionsTableProps> = ({
+  onEdit,
+  loading = false,
+}) => {
+  const [actions, setActions] = useState<Action[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchActions = async () => {
       try {
         const data = await getCollection('actions');
-        setActions(data);
+        setActions(data as Action[]);
       } catch (err) {
         setError('Failed to fetch actions');
         console.error(err);
@@ -32,7 +48,7 @@ const ActionsTable = ({ onEdit, loading = false }) => {
     fetchActions();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     try {
       await deleteDocument('actions', id);
       setActions(actions.filter(action => action.id !== id));
@@ -84,6 +100,4 @@ const ActionsTable = ({ onEdit, loading = false }) => {
       </Table>
     </TableContainer>
   );
-};
-
-export default ActionsTable;
+}; 

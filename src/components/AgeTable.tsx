@@ -15,8 +15,6 @@ import {
 import { Edit as EditIcon, Check as CheckIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { firestore } from "../utils/firestore.js";
-import { tableText } from "../utils/tooltips.js";
 
 ChartJS.register(
   CategoryScale,
@@ -27,88 +25,25 @@ ChartJS.register(
   Legend
 );
 
-const useStyles = {
-  root: {
-    width: "80%",
-    marginLeft: "auto",
-    marginRight: "auto",
-  },
-  table: {
-    marginLeft: "auto",
-    marginRight: "auto",
-    minWidth: 650,
-  },
-  selectTableCell: {
-    width: 20,
-    height: 0,
-    padding: 0,
-  },
-  tableCell: {
-    width: 30,
-    height: 0,
-    padding: 0,
-  },
-  input: {
-    width: 40,
-    height: 30,
-    flex: 1,
-    "& input::-webkit-clear-button, & input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
-      display: "none",
-    },
-  },
-};
+interface AgeTableProps {
+  data: {
+    id: string;
+    age: number;
+    count: number;
+  }[];
+  onEdit: (id: string, value: number) => void;
+  loading?: boolean;
+}
 
-const createData = (
-  ageRange,
-  area,
-  percent,
-  hecVolume,
-  totVolume,
-  quality,
-  growthRate,
-  pine,
-  fir,
-  leaf
-) => ({
-  id: ageRange.replace(" ", "_"),
-  ageRange,
-  area,
-  percent,
-  hecVolume,
-  totVolume,
-  quality,
-  growthRate,
-  pine,
-  fir,
-  leaf,
-  isEditMode: false,
-});
+export const AgeTable: React.FC<AgeTableProps> = ({
+  data,
+  onEdit,
+  loading = false,
+}) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
 
-const CustomTableCell = ({ row, name, onChange }) => {
-  const { isEditMode } = row;
-  return (
-    <TableCell align="center" className={useStyles.tableCell}>
-      {isEditMode ? (
-        <TextField
-          value={row[name]}
-          name={name}
-          onChange={(e) => onChange(e, row)}
-          className={useStyles.input}
-          size="small"
-          type="number"
-        />
-      ) : (
-        row[name]
-      )}
-    </TableCell>
-  );
-};
-
-const AgeTable = ({ data, onEdit, loading = false }) => {
-  const [editingId, setEditingId] = useState(null);
-  const [editValue, setEditValue] = useState('');
-
-  const handleEdit = (id, value) => {
+  const handleEdit = (id: string, value: number) => {
     setEditingId(id);
     setEditValue(value.toString());
   };
@@ -141,7 +76,7 @@ const AgeTable = ({ data, onEdit, loading = false }) => {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top',
+        position: 'top' as const,
       },
       title: {
         display: true,
@@ -210,6 +145,4 @@ const AgeTable = ({ data, onEdit, loading = false }) => {
       </div>
     </div>
   );
-};
-
-export default AgeTable;
+}; 
