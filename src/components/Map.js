@@ -12,6 +12,7 @@ import { geoPointToArrayList } from "../utils/Utils.js";
 
 const Map = ({ sendDataToParent }) => {
   const mapRef = useRef(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   const [data, setData] = useState(null);
   const [hoveredFeature, setHoveredFeature] = useState(null);
@@ -95,26 +96,26 @@ const Map = ({ sendDataToParent }) => {
   }, []);
 
   const _onHover = useCallback((event) => {
-    if (!event || !event.features) return;
+    if (!event || !event.features || !isMapLoaded) return;
     
     const {
       features,
       srcEvent: { offsetX, offsetY },
     } = event;
     
-    const hovFeature = features.find((f) => f.layer.id === "data");
+    const hovFeature = features.find((f) => f.layer.id === "area-fill");
     if (hovFeature) {
       setHoveredFeature({ hovFeature, x: offsetX, y: offsetY });
     } else {
       setHoveredFeature(null);
     }
-  }, []);
+  }, [isMapLoaded]);
 
   const _onClick = useCallback((event) => {
-    if (!event || !event.features || event.features.length === 0) return;
+    if (!event || !event.features || event.features.length === 0 || !isMapLoaded) return;
     const feature = event.features[0].id;
     sendDataToParent(feature);
-  }, [sendDataToParent]);
+  }, [sendDataToParent, isMapLoaded]);
 
   const _renderTooltip = () => {
     if (!hoveredFeature) return null;
@@ -160,6 +161,10 @@ const Map = ({ sendDataToParent }) => {
     }));
   }, []);
 
+  const onMapLoad = useCallback(() => {
+    setIsMapLoaded(true);
+  }, []);
+
   return (
     <ReactMapGL
       ref={mapRef}
@@ -171,7 +176,8 @@ const Map = ({ sendDataToParent }) => {
       onClick={_onClick}
       attributionControl={false}
       onViewportChange={onViewportChange}
-      interactiveLayerIds={['data']}
+      onLoad={onMapLoad}
+      interactiveLayerIds={isMapLoaded ? ['area-fill'] : []}
       dragPan={true}
       dragRotate={false}
       touchZoom={true}
@@ -179,32 +185,42 @@ const Map = ({ sendDataToParent }) => {
       scrollZoom={true}
       touchPitch={false}
       keyboard={false}
-      preserveDrawingBuffer={true}
-      renderWorldCopies={false}
-      maxZoom={20}
-      minZoom={1}
     >
       {data && (
         <Source type="geojson" data={data}>
-          <Layer {...dataLayer} />
           <Layer
-            id="lineLayer2"
-            type="line"
-            source="data"
-            layout={{
-              "line-join": "round",
-              "line-cap": "round",
-            }}
+            id="area-fill"
+            type="fill"
             paint={{
-              "line-color": "rgba(0, 0, 0, 0.7)",
-              "line-width": 1,
+              'fill-color': [
+                'match',
+                ['get', 'color'],
+                100, '#FF0000',
+                200, '#00FF00',
+                166, '#0000FF',
+                '#CCCCCC'
+              ],
+              'fill-opacity': 0.5,
+              'fill-outline-color': '#000000'
             }}
           />
           <Layer
+            id="area-outline"
+            type="line"
+            paint={{
+              'line-color': '#000000',
+              'line-width': 1
+            }}
+          />
+          <Layer
+            id="area-labels"
             type="symbol"
             layout={{
-              "text-size": 13,
-              "text-field": "{label}",
+              'text-field': ['get', 'label'],
+              'text-size': 12
+            }}
+            paint={{
+              'text-color': '#000000'
             }}
           />
         </Source>
@@ -214,15 +230,10 @@ const Map = ({ sendDataToParent }) => {
         <Layer
           id="lineLayer"
           type="line"
-          source="my-data"
-          layout={{
-            "line-join": "bevel",
-            "line-cap": "round",
-          }}
           paint={{
-            "line-color": "rgba(255, 0, 0, 0.7)",
-            "line-width": 3,
-            "line-dasharray": [1, 2],
+            'line-color': 'rgba(255, 0, 0, 0.7)',
+            'line-width': 3,
+            'line-dasharray': [1, 2]
           }}
         />
       </Source>
@@ -231,9 +242,8 @@ const Map = ({ sendDataToParent }) => {
         <Layer
           id="polygonLayer"
           type="fill"
-          source="houseCollection"
           paint={{
-            "fill-color": "rgba(255, 255, 255, 0.5)",
+            'fill-color': 'rgba(255, 255, 255, 0.5)'
           }}
         />
       </Source>
