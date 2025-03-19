@@ -1,11 +1,10 @@
-import { mockAreas, mockTrees, mockActions, mockUser } from './mockData';
+import { mockAreas, mockTrees, mockActions } from './mockData';
 
 // Mock database
 export const mockDb = {
   areas: mockAreas,
   trees: mockTrees,
-  actions: mockActions,
-  users: [mockUser] // Initialize users collection with mockUser
+  actions: mockActions
 };
 
 // Mock db for compatibility with Firebase
@@ -40,127 +39,80 @@ export const db = {
 
 // Mock auth
 export const auth = {
-  currentUser: mockUser,
+  currentUser: null,
   signInWithEmailAndPassword: async () => {
-    return { user: mockUser };
+    return { user: { uid: 'mock-user-id' } };
   },
   signOut: async () => {
     console.log('Mock: User signed out');
   }
 };
 
-// Mock authentication methods
-export const signInWithEmailAndPassword = async (email, password) => {
-  console.log('Mock: Signing in with email and password');
-  return { user: mockUser };
-};
-
-export const signOut = async () => {
-  console.log('Mock: User signed out');
-};
-
 // Mock database functions
-export const getDocument = async (collectionName, docId) => {
-  try {
-    const collection = mockDb[collectionName];
-    if (!collection) return null;
-    
-    const doc = collection.find(d => d.id === docId);
-    return doc || null;
-  } catch (err) {
-    console.error('Error getting document:', err);
-    return null;
-  }
+export const getDocument = async (collectionName, id) => {
+  const collection = mockDb[collectionName];
+  if (!collection) return null;
+  return collection.find(doc => doc.id === id) || null;
 };
 
-export const getCollection = async (collectionName) => {
-  try {
-    const collection = mockDb[collectionName];
-    if (!collection) {
-      console.warn(`Collection ${collectionName} not found`);
-      return [];
-    }
-    return collection;
-  } catch (err) {
-    console.error('Error getting collection:', err);
-    return [];
+export const getCollection = async (collectionName, conditions = []) => {
+  let collection = mockDb[collectionName];
+  if (!collection) return [];
+
+  // Apply conditions if any
+  if (conditions.length > 0) {
+    collection = collection.filter(doc => {
+      return conditions.every(condition => {
+        switch (condition.operator) {
+          case '==':
+            return doc[condition.field] === condition.value;
+          case '>':
+            return doc[condition.field] > condition.value;
+          case '<':
+            return doc[condition.field] < condition.value;
+          default:
+            return true;
+        }
+      });
+    });
   }
+
+  return collection;
 };
 
 export const addDocument = async (collectionName, document) => {
-  try {
-    const collection = mockDb[collectionName];
-    if (!collection) {
-      console.warn(`Collection ${collectionName} not found`);
-      return null;
-    }
+  const collection = mockDb[collectionName];
+  if (!collection) return null;
 
-    const newDoc = {
-      id: String(collection.length + 1),
-      ...document
-    };
-    
-    collection.push(newDoc);
-    return newDoc.id;
-  } catch (err) {
-    console.error('Error adding document:', err);
-    return null;
+  const newDoc = {
+    id: String(collection.length + 1),
+    ...document
+  };
+  collection.push(newDoc);
+  return newDoc.id;
+};
+
+export const updateDocument = async (collectionName, id, document) => {
+  const collection = mockDb[collectionName];
+  if (!collection) return;
+
+  const index = collection.findIndex(doc => doc.id === id);
+  if (index !== -1) {
+    collection[index] = { ...collection[index], ...document };
   }
 };
 
-export const updateDocument = async (collectionName, docId, document) => {
-  try {
-    const collection = mockDb[collectionName];
-    if (!collection) {
-      console.warn(`Collection ${collectionName} not found`);
-      return;
-    }
+export const deleteDocument = async (collectionName, id) => {
+  const collection = mockDb[collectionName];
+  if (!collection) return;
 
-    const index = collection.findIndex(doc => doc.id === docId);
-    if (index !== -1) {
-      collection[index] = { ...collection[index], ...document };
-    }
-  } catch (err) {
-    console.error('Error updating document:', err);
+  const index = collection.findIndex(doc => doc.id === id);
+  if (index !== -1) {
+    collection.splice(index, 1);
   }
 };
 
-export const deleteDocument = async (collectionName, docId) => {
-  try {
-    const collection = mockDb[collectionName];
-    if (!collection) {
-      console.warn(`Collection ${collectionName} not found`);
-      return;
-    }
-
-    const index = collection.findIndex(doc => doc.id === docId);
-    if (index !== -1) {
-      collection.splice(index, 1);
-    }
-  } catch (err) {
-    console.error('Error deleting document:', err);
-  }
-};
-
-export const generateUserDocument = async (user) => {
-  try {
-    const collection = mockDb['users'];
-    if (!collection) {
-      console.warn('Users collection not found');
-      return null;
-    }
-
-    const newUser = {
-      id: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      createdAt: new Date().toISOString()
-    };
-    
-    collection.push(newUser);
-    return newUser;
-  } catch (err) {
-    console.error('Error generating user document:', err);
-    return null;
-  }
+export const generateUserDocument = async (userId, userData) => {
+  // In mock mode, we don't need to do anything
+  console.log('Mock: Generating user document', { userId, userData });
 };
